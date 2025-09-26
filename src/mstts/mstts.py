@@ -25,7 +25,7 @@ def get_row_selection(
     v: int = 1,
     n_strict: int | None = None,
     non_strict_weight: int | float = 1,
-):
+) -> list[int] | None:
     """
     Select indexes for subset of rows taking ~ `label_frac` positive samples
 
@@ -166,7 +166,14 @@ def get_row_selection(
     return selected_rows
 
 
-def train_test_split(rows, test_frac=0.2, test_prec=0.15, v=1, n_strict=None, non_strict_weight=1):
+def train_test_split(
+    rows: np.ndarray | list[list],
+    test_frac: float = 0.2,
+    test_prec: float = 0.15,
+    v: int = 1,
+    n_strict: int | None = None,
+    non_strict_weight: int | float = 1,
+) -> tuple[list[int] | None, list[int] | None]:
     """
     Split rows into train and test sets, taking ~ `test_frac` positive samples in the test set
 
