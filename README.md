@@ -9,14 +9,14 @@ pip install git+ssh://git@github.com:dsl-unibe-ch/mstts.git
 ```
 
 ## Usage
-You choose target % if the training set, and the method will run constraint SP-SAT to 
+You choose target % if the training set, and the method will run constraint SP-SAT to
 find the best split.
 If best split exist, thy result will be same each time you run it.
 
 You can have 2 types of columnts: strict and priority.
 - strict columns: the distribution of these columns will be preserved withing margin of
   trainf_frac_window (ToDo - fix name)
-- priority columns: the distribution of these columns will also weighted in the 
+- priority columns: the distribution of these columns will also weighted in the
   optimisation term but the selected fraction is not guaranteed to be within the margin.
 
 
@@ -47,4 +47,3 @@ splitter = MulticlassStratifiedTrainTestSpliter(.....
 
 ## License
 Apache 2.0
-
