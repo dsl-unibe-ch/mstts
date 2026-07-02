@@ -122,9 +122,13 @@ def get_row_selection(  # noqa: C901  (solver status handling is inherently bran
     solver.parameters.max_time_in_seconds = 60
 
     status = solver.Solve(model)
+    # Compare on the status name (str) rather than the enum value: ortools ships type
+    # info on some platforms and not others, so `status == cp_model.OPTIMAL` trips
+    # mypy's strict-equality check where the enum is typed. StatusName is always str.
+    status_name = solver.StatusName(status)
 
     selected_rows = []
-    if status == cp_model.OPTIMAL:
+    if status_name == "OPTIMAL":
         if v:
             print("Objective value =", solver.ObjectiveValue())
         for i in range(n):
@@ -132,15 +136,15 @@ def get_row_selection(  # noqa: C901  (solver status handling is inherently bran
                 if v == 2:
                     print(i, rows[i])
                 selected_rows.append(i)
-    elif status == cp_model.INFEASIBLE:
+    elif status_name == "INFEASIBLE":
         print("No solution found")
         return None
 
-    elif status == cp_model.UNKNOWN:
+    elif status_name == "UNKNOWN":
         print("Time limit reached")
         return None
 
-    elif status == cp_model.FEASIBLE:
+    elif status_name == "FEASIBLE":
         if v:
             print("Feasible solution found")
             print("Objective value =", solver.ObjectiveValue())
