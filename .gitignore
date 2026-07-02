@@ -22,6 +22,12 @@ notebooks/*.ipynb_checkpoints
 *.log
 *.sqlite3
 
+# Test / coverage artifacts
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+
 # Environment variables file
 .env
 .env.*

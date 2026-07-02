@@ -11,14 +11,10 @@ Copyright 2023-2025 Mykhailo Vladymyrov, DSL, University of Bern, Switzerland
 """
 
 import numpy as np
-
-try:
-    from ortools.sat.python import cp_model
-except ImportError:
-    cp_model = None
+from ortools.sat.python import cp_model
 
 
-def get_row_selection(
+def get_row_selection(  # noqa: C901  (solver status handling is inherently branchy)
     rows: np.ndarray | list[list],
     label_frac: float = 0.8,
     label_prec: float = 0.15,
@@ -51,7 +47,8 @@ def get_row_selection(
         selected_rows: list of indexes of selected rows, or None if no solution found
 
     """
-    rows = np.array(rows)
+    # CP-SAT requires integer coefficients; cast so float inputs (e.g. np.zeros) work.
+    rows = np.asarray(rows, dtype=int)
     n = rows.shape[0]
     m = rows.shape[1]
 
@@ -159,8 +156,9 @@ def get_row_selection(
         selected_rows_sum = rows[selected_rows].sum(axis=0)
 
         for j in range(m):
+            pct = selected_rows_sum[j] / n_positive_samples[j] * 100 if n_positive_samples[j] else 0.0
             print(
-                f"{n_positive_thres_lo[j]:>3} <= {selected_rows_sum[j]:>3} ?= {n_positive_thres_best[j]:>3} <= {n_positive_thres_hi[j]:>3} of {n_positive_samples[j]:>3}  ({selected_rows_sum[j] / n_positive_samples[j] * 100:.1f}%)"
+                f"{n_positive_thres_lo[j]:>3} <= {selected_rows_sum[j]:>3} ?= {n_positive_thres_best[j]:>3} <= {n_positive_thres_hi[j]:>3} of {n_positive_samples[j]:>3}  ({pct:.1f}%)"
             )
 
     return selected_rows
