@@ -2,6 +2,7 @@
 
 import numpy as np
 import pytest
+
 from mstts.mstts import train_test_split
 
 
@@ -89,6 +90,20 @@ def test_train_test_split_empty():
     # Should handle empty data gracefully
     with pytest.raises(IndexError):
         train_test_split(rows, v=0)
+
+
+def test_train_test_split_infeasible():
+    """No feasible split (over-constrained by zero allowance) -> (None, None)."""
+    rows = np.array([
+        [0, 1, 1, 0],
+        [0, 1, 0, 1],
+        [1, 1, 1, 0],
+        [0, 0, 1, 0],
+    ])
+
+    train_idx, test_idx = train_test_split(rows, test_frac=0.25, test_prec=0.0, v=1)
+    assert train_idx is None
+    assert test_idx is None
 
 
 def test_train_test_split_edge_cases():

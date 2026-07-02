@@ -1,5 +1,11 @@
 # MSTTS
 
+[![CI](https://github.com/dsl-unibe-ch/mstts/actions/workflows/ci.yml/badge.svg)](https://github.com/dsl-unibe-ch/mstts/actions/workflows/ci.yml)
+[![PyPI version](https://img.shields.io/pypi/v/mstts.svg)](https://pypi.org/project/mstts/)
+[![Python versions](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://pypi.org/project/mstts/)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+
 **M**ulti-class **S**tratified **T**rain-**T**est **S**plitter — split a dataset into
 train and test sets while preserving the per-column distribution of *many* target
 classes at once.
@@ -64,6 +70,41 @@ train_df, test_df = df.iloc[train_idx], df.iloc[test_idx]
 
 If no feasible split exists (or the 60 s solver time limit is hit),
 `train_test_split` returns `(None, None)` and `get_row_selection` returns `None`.
+
+### Every parameter, and what each returns
+
+Both functions share `rows`, `v`, `n_strict`, and `non_strict_weight`; they differ only
+in how the target fraction is named (`label_*` for the selection, `test_*` for the
+split). The snippet below passes every argument explicitly at its default value:
+
+```python
+from mstts import get_row_selection, train_test_split
+
+# get_row_selection — pick a subset of rows hitting a target fraction per column
+selected = get_row_selection(
+    rows,                 # (n_samples, n_columns) array-like of non-negative ints
+    label_frac=0.8,       # target fraction of each column's total to include
+    label_prec=0.15,      # allowance: included fraction may be label_frac ± label_prec
+    v=1,                  # verbosity: 0 = silent, 1 = summary, 2 = debug
+    n_strict=None,        # first n_strict columns are hard-constrained; None = all
+    non_strict_weight=1,  # relative weight of priority (non-strict) columns
+)
+# -> list[int]: indices of the selected rows
+#    or None     if no feasible selection is found / the time limit is reached
+
+# train_test_split — split row indices into train and test sets
+train_idx, test_idx = train_test_split(
+    rows,                 # same as above
+    test_frac=0.2,        # target fraction of each column's total for the TEST set
+    test_prec=0.15,       # allowance: test fraction may be test_frac ± test_prec
+    v=1,
+    n_strict=None,
+    non_strict_weight=1,
+)
+# -> (train_idx, test_idx): two lists of row indices — disjoint and together covering
+#    every row (train_idx is the ~(1 - test_frac) portion)
+#    or (None, None)         if no feasible split is found / the time limit is reached
+```
 
 ## Thresholds & allowances
 
@@ -175,6 +216,23 @@ row**.
 > above), the small unit-test fixtures are scaled up with `np.tile` so the requested
 > fractions are actually achievable — a column whose total is `2` cannot be split
 > `80 / 20`.
+
+## Releasing (for maintainers)
+
+Publishing to PyPI is automated. Pushing a **version tag** (`v*`) triggers the
+`Publish to PyPI` GitHub Action, which builds the package and uploads it via Trusted
+Publishing (OIDC — no stored token). The published version is taken from the tag (a
+leading `v` is stripped), so you never edit the version in `pyproject.toml` by hand:
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0     # -> publishes mstts 0.1.0
+```
+
+PyPI rejects re-uploading an existing version, so every release needs a new tag. Only
+tags matching `v*` publish; other tags are ignored. A one-time PyPI trusted-publisher
+setup is required before the first release — see
+[`.github/workflows/README.md`](.github/workflows/README.md).
 
 ## License
 

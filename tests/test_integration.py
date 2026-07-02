@@ -1,6 +1,7 @@
 """Integration tests for MSTTS module."""
 
 import numpy as np
+
 from mstts.mstts import get_row_selection, train_test_split
 
 

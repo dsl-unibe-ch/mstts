@@ -2,6 +2,7 @@
 
 import numpy as np
 import pytest
+
 from mstts.mstts import get_row_selection
 
 
@@ -76,6 +77,30 @@ def test_get_row_selection_n_strict():
     # The other columns might not be within this range
 
 
+def test_get_row_selection_float_non_strict_weight():
+    """A float non_strict_weight down-weights priority columns (and must still solve).
+
+    Floats take the alternate weighting path (strict weight becomes 10, priority weight
+    becomes int(10 * weight)); the first n_strict columns keep their hard window.
+    """
+    rows = np.tile(
+        np.array(
+            [[1, 1, 0, 0], [1, 0, 1, 0], [1, 0, 0, 1], [0, 1, 1, 0], [0, 1, 0, 1], [0, 0, 1, 1], [1, 1, 1, 0], [0, 1, 1, 1]]
+        ),
+        (5, 1),
+    )
+
+    selected = get_row_selection(rows, label_frac=0.75, label_prec=0.1, v=1, n_strict=2, non_strict_weight=0.1)
+
+    assert selected is not None
+    selected_sums = rows[selected].sum(axis=0)
+    column_sums = rows.sum(axis=0)
+
+    # Strict columns still honour the 0.75 +/- 0.1 window regardless of the weight.
+    assert all((selected_sums[:2] / column_sums[:2]) >= 0.65)
+    assert all((selected_sums[:2] / column_sums[:2]) <= 0.85)
+
+
 def test_get_row_selection_empty():
     """Test get_row_selection with empty data."""
     rows = np.array([])
@@ -83,6 +108,23 @@ def test_get_row_selection_empty():
     # Should handle empty data gracefully
     with pytest.raises(IndexError):
         get_row_selection(rows, v=2)
+
+
+def test_get_row_selection_infeasible():
+    """No feasible selection -> None.
+
+    With zero allowance (label_prec=0) the per-column targets become exact and can
+    conflict: here col 0 and col 3 must be fully excluded, which starves col 1 of the
+    count it needs, so the constraint system is jointly infeasible.
+    """
+    rows = np.array([
+        [0, 1, 1, 0],
+        [0, 1, 0, 1],
+        [1, 1, 1, 0],
+        [0, 0, 1, 0],
+    ])
+
+    assert get_row_selection(rows, label_frac=0.75, label_prec=0.0, v=1) is None
 
 
 def test_get_row_selection_edge_cases():

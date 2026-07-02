@@ -1,0 +1,40 @@
+name: Publish to PyPI
+
+# Publish on every pushed version tag (v*). The tag drives the published version:
+#   git tag v0.2.0 && git push origin v0.2.0   ->   publishes mstts 0.2.0
+# A leading "v" is stripped; the rest is used verbatim as the version.
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    # Scopes the OIDC token to this environment. The PyPI trusted-publisher
+    # config must list "pypi" as the environment name (see .github/workflows/README).
+    environment: pypi
+
+    permissions:
+      # Required for Trusted Publishing (OIDC) — lets the job mint a short-lived
+      # token instead of storing a long-lived PyPI secret.
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Set version from tag
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          echo "Tag '$GITHUB_REF_NAME' -> version '$version'"
+          uv version "$version"
+
+      - name: Build sdist and wheel
+        run: uv build
+
+      - name: Publish to PyPI (Trusted Publishing)
+        run: uv publish --trusted-publishing always

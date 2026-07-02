@@ -1,17 +1,35 @@
+## Pre-commit hooks for mstts. Mirrors the CI checks (ruff + mypy) so a clean
+# `pre-commit run` means a green CI.
+#
+#   pre-commit install          # enable on `git commit`
+#   pre-commit run --all-files  # run everything once
+#
+# Keep the ruff `rev` in sync with the ruff version pinned in uv.lock.
+
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v6.0.0
+    rev: v5.0.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-yaml
-      - id: check-added-large-files
       - id: check-toml
+      - id: check-merge-conflict
+      - id: check-added-large-files
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.3.0
+    rev: v0.13.2
     hooks:
-      - id: ruff
-        args: [--fix, --exit-non-zero-on-fix]
-      - id: ruff-format
-        args: [--line-length=120]
+      - id: ruff-check
+        args: [--fix]
+
+  - repo: local
+    hooks:
+      - id: mypy
+        name: mypy
+        # Run through uv so the project's environment and [tool.mypy] config
+        # (files = ["src"]) are used, matching CI exactly.
+        entry: uv run mypy
+        language: system
+        types: [python]
+        pass_filenames: false
